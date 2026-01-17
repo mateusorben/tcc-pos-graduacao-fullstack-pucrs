@@ -3,6 +3,46 @@ const router = express.Router();
 const db = require('./database');
 const bcrypt = require('bcrypt');
 
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
+    }
+
+    try {
+
+        const userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
+        }
+
+        const user = userResult.rows[0];
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
+        }
+
+        delete user.password;
+        
+        res.json({
+            message: 'Login realizado com sucesso!',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro interno ao realizar login.' });
+    }
+});
+
 router.post('/products', async (req, res) => {
     const { name, obs, quantity, min_quantity, expiry_date, category_id, user_id } = req.body;
 
