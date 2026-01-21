@@ -2,9 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./database');
 const routes = require('./routes');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    error: "Muitas requisições vindas deste IP, tente novamente após 15 minutos."
+  },
+  standardHeaders: true,
+  legacyHeaders: false, 
+});
+
+
+app.use(limiter);
 app.use(cors());
 app.use(express.json());
 app.use('/api', routes);
