@@ -1,14 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Pantry from './pages/Pantry';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="flex items-center justify-center h-screen bg-blue-500">
-      <h1 className="text-4xl font-bold text-white underline">
-        Tailwind Funcionando!
-      </h1>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route 
+          path="/pantry" 
+          element={<ProtectedRoute>
+            <Pantry />
+          </ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-export default App
+
+export default App;
