@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('./database');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('./auth');
 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -27,14 +29,17 @@ router.post('/login', async (req, res) => {
         }
 
         delete user.password;
-        
+
+        const token = jwt.sign(
+            { userId: user.id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
         res.json({
             message: 'Login realizado com sucesso!',
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email
-            }
+            token,
+            user: { id: user.id, name: user.name, email: user.email }
         });
 
     } catch (err) {
@@ -43,10 +48,23 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/products', async (req, res) => {
-    const { name, obs, quantity, min_quantity, expiry_date, category_id, user_id } = req.body;
+router.get('/products', authMiddleware, async (req, res) => {
+    try {
+        const query = 'SELECT * FROM products WHERE user_id = $1 ORDER BY expiry_date ASC';
+        const result = await db.query(query, [req.userId]);
+        
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar seus produtos.' });
+    }
+});
 
-    if (!name || !expiry_date || !user_id) {
+router.post('/products', authMiddleware, async (req, res) => {
+    const { name, obs, quantity, min_quantity, expiry_date, category_id } = req.body;
+    const userId = req.userId;
+
+    if (!name || !expiry_date || !userId) {
         return res.status(400).json({ error: 'Nome, validade e ID do usuário são obrigatórios.' });
     }
 
@@ -57,7 +75,7 @@ router.post('/products', async (req, res) => {
             RETURNING *;
         `;
         
-        const values = [name, obs, quantity || 1, min_quantity || 0, expiry_date, category_id, user_id];
+        const values = [name, obs, quantity || 1, min_quantity || 0, expiry_date, category_id, userId];
         
         const result = await db.query(query, values);
         
