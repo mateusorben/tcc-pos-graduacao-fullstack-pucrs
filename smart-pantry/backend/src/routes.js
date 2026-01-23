@@ -86,6 +86,26 @@ router.post('/products', authMiddleware, async (req, res) => {
     }
 });
 
+router.delete('/products/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+
+        const result = await db.query(
+            'DELETE FROM products WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Produto não encontrado ou sem permissão.' });
+        }
+
+        res.json({ message: 'Produto removido com sucesso!' });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao deletar produto.' });
+    }
+});
+
 router.post('/users', async (req, res) => {
     const { name, email, password } = req.body;
 

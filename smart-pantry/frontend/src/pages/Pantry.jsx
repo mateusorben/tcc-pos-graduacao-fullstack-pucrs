@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Package, Calendar, LogOut, Plus, X } from 'lucide-react';
+import { Package, Calendar, LogOut, Plus, X, Trash2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Pantry() {
@@ -8,11 +8,26 @@ export default function Pantry() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [obs, setObs] = useState('');
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const diff = new Date(p.expiry_date) - new Date();
+    const days = diff / (1000 * 60 * 60 * 24);
+    
+    if (filterStatus === 'expired') return matchesSearch && days < 0;
+    if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < 7;
+    
+    return matchesSearch;
+  });
 
   async function loadProducts() {
     try {
@@ -61,6 +76,17 @@ export default function Pantry() {
     return 'text-slate-500';
   }
 
+  async function handleDelete(id) {
+  if (!window.confirm("Deseja realmente remover este item?")) return;
+
+  try {
+    await api.delete(`/products/${id}`);
+    setProducts(products.filter(p => p.id !== id));
+  } catch (err) {
+    alert("Erro ao excluir produto");
+  }
+}
+
   function handleLogout() {
     localStorage.clear();
     navigate('/login');
@@ -75,21 +101,73 @@ export default function Pantry() {
       </nav>
 
       <main className="max-w-4xl mx-auto p-6">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">Meus Itens</h2>
-        
-        {/* Grid de Itens */}
+        {/* CABEÇALHO E BUSCA */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">Meus Itens</h2>
+          
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar produto..."
+              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* BOTÕES DE FILTRO RÁPIDO */}
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+          <button 
+            onClick={() => setFilterStatus('all')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'all' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
+          >
+            Todos
+          </button>
+          <button 
+            onClick={() => setFilterStatus('expired')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'expired' ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
+          >
+            Vencidos
+          </button>
+          <button 
+            onClick={() => setFilterStatus('warning')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'warning' ? 'bg-amber-500 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
+          >
+            Vencendo logo
+          </button>
+        </div>
+
+        {/* GRID DE ITENS FILTRADOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {products.map(p => (
-            <div key={p.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <div className="flex justify-between font-bold text-slate-700">
-                <span>{p.name}</span>
-                <span className="text-emerald-600">{p.quantity} un</span>
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((p) => (
+              <div key={p.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex justify-between items-start font-bold text-slate-700">
+                  <span className="truncate pr-2">{p.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-emerald-600 whitespace-nowrap">{p.quantity} un</span>
+                    <button 
+                      onClick={() => handleDelete(p.id)}
+                      className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                      title="Excluir item"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <p className={`text-sm flex items-center gap-1 mt-2 ${getExpiryColor(p.expiry_date)}`}>
+                  <Calendar size={14} /> Validade: {new Date(p.expiry_date).toLocaleDateString('pt-BR')}
+                </p>
               </div>
-              <p className={`text-sm flex items-center gap-1 mt-2 ${getExpiryColor(p.expiry_date)}`}>
-                <Calendar size={14} /> Validade: {new Date(p.expiry_date).toLocaleDateString('pt-BR')}
-              </p>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
+              <p className="text-slate-400">Nenhum item encontrado para esta busca ou filtro.</p>
             </div>
-          ))}
+          )}
         </div>
       </main>
 
