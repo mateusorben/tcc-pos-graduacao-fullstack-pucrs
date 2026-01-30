@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import NotificationManager from '../components/NotificationManager';
 
 export const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -7,5 +8,10 @@ export const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return (
+    <>
+      <NotificationManager />
+      {children}
+    </>
+  );
 };

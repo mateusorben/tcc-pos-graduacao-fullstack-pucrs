@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Package, LogOut, User, Settings } from 'lucide-react';
+import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Header() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -28,45 +31,64 @@ export default function Header() {
     }
 
     return (
-        <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-50 relative shadow-sm">
-            <Link to="/pantry" className="text-xl font-bold text-emerald-600 flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <nav className="bg-white dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800 px-6 py-4 flex justify-between items-center z-50 relative shadow-sm transition-colors duration-300">
+            <Link to="/pantry" className="text-xl font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Package /> Smart Pantry
             </Link>
 
-            <div className="relative">
-                <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="flex items-center gap-2 focus:outline-none"
-                    title="Menu do Usuário"
+            <div className="flex items-center gap-4">
+                <Link
+                    to="/shopping-list"
+                    className="p-2 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors relative"
+                    title="Lista de Compras"
                 >
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center border-2 border-emerald-200 hover:scale-105 transition-transform">
-                        {user ? getInitials(user.name) : 'U'}
-                    </div>
-                </button>
+                    <ShoppingCart size={24} />
+                </Link>
 
-                {isMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="px-4 py-2 border-b border-slate-100 mb-2">
-                            <p className="text-sm font-bold text-slate-800 truncate">{user?.name}</p>
-                            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                <div className="relative">
+                    <button
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="flex items-center gap-2 focus:outline-none"
+                        title="Menu do Usuário"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center border-2 border-emerald-200 hover:scale-105 transition-transform">
+                            {user ? getInitials(user.name) : 'U'}
                         </div>
+                    </button>
 
-                        <Link
-                            to="/profile"
-                            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors w-full text-left font-medium"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            <Settings size={18} /> Meu Perfil
-                        </Link>
+                    {isMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-slate-100 dark:border-zinc-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                            <div className="px-4 py-2 border-b border-slate-100 dark:border-zinc-800 mb-2">
+                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-200 truncate">{user?.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{user?.email}</p>
+                            </div>
 
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left font-medium"
-                        >
-                            <LogOut size={18} /> Sair
-                        </button>
-                    </div>
-                )}
+                            <button
+                                type="button"
+                                onClick={toggleTheme}
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full text-left font-medium"
+                            >
+                                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                                {theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}
+                            </button>
+
+                            <Link
+                                to="/profile"
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full text-left font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <Settings size={18} /> Meu Perfil
+                            </Link>
+
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors w-full text-left font-medium"
+                            >
+                                <LogOut size={18} /> Sair
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Overlay para fechar ao clicar fora */}

@@ -223,4 +223,46 @@ router.put('/users', authMiddleware, async (req, res) => {
     }
 });
 
+router.get('/shopping-list', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const query = `
+            SELECT * FROM products 
+            WHERE user_id = $1 
+            AND (expiry_date < NOW() OR quantity <= min_quantity)
+            ORDER BY name ASC
+        `;
+        const result = await db.query(query, [userId]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar lista de compras.' });
+    }
+});
+
+// --- SUBSCRIPTIONS (PUSH NOTIFICATIONS) ---
+
+router.get('/vapid-public-key', (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+router.post('/subscribe', authMiddleware, async (req, res) => {
+    const subscription = req.body;
+    const userId = req.userId;
+
+    try {
+        await db.query(
+            `INSERT INTO subscriptions (user_id, endpoint, keys) 
+             VALUES ($1, $2, $3)
+             ON CONFLICT (endpoint) DO NOTHING`,
+            [userId, subscription.endpoint, JSON.stringify(subscription.keys)]
+        );
+        res.status(201).json({});
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erro ao salvar inscrição" });
+    }
+});
+
 module.exports = router;
