@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Register from './pages/Register';
 import Login from './pages/Login';
 import Pantry from './pages/Pantry';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -8,8 +9,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/pantry" 
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/pantry"
           element={<ProtectedRoute>
             <Pantry />
           </ProtectedRoute>} />

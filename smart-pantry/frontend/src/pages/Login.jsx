@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,7 +15,7 @@ export default function Login() {
       const response = await api.post('/login', { email, password });
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/pantry'); 
+      navigate('/pantry');
     } catch (err) {
       alert(err.response?.data?.error || "Erro ao conectar com o servidor");
     } finally {
@@ -28,28 +28,34 @@ export default function Login() {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
         <h1 className="text-3xl font-extrabold text-emerald-600 text-center mb-2">Smart Pantry</h1>
         <p className="text-slate-500 text-center mb-8 text-sm">Gerencie sua despensa de forma inteligente</p>
-        
+
         <form onSubmit={handleLogin} className="space-y-4">
-          <input 
-            type="email" placeholder="Seu e-mail" 
+          <input
+            type="email" placeholder="Seu e-mail"
             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             onChange={e => setEmail(e.target.value)}
             required
           />
-          <input 
-            type="password" placeholder="Sua senha" 
+          <input
+            type="password" placeholder="Sua senha"
             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             onChange={e => setPassword(e.target.value)}
             required
           />
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-500">
+            Não tem uma conta? <Link to="/register" className="text-emerald-600 font-bold hover:underline">Cadastre-se</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
