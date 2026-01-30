@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Header from '../components/Header';
-import { Calendar, Plus, X, Trash2, Search } from 'lucide-react';
+import { Calendar, Plus, X, Trash2, Search, Pencil } from 'lucide-react';
 
 export default function Pantry() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -41,15 +43,41 @@ export default function Pantry() {
 
   useEffect(() => { loadProducts(); }, []);
 
-  async function handleAddProduct(e) {
+  function handleOpenModal(product = null) {
+    if (product) {
+      setEditingProduct(product);
+      setName(product.name);
+      setQuantity(product.quantity);
+      setExpiryDate(new Date(product.expiry_date).toISOString().split('T')[0]);
+      setObs(product.obs || '');
+    } else {
+      setEditingProduct(null);
+      setName('');
+      setQuantity('');
+      setExpiryDate('');
+      setObs('');
+    }
+    setIsModalOpen(true);
+  }
+
+  async function handleSaveProduct(e) {
     e.preventDefault();
     try {
-      await api.post('/products', {
-        name,
-        quantity: Number(quantity),
-        expiry_date: expiryDate,
-        obs
-      });
+      if (editingProduct) {
+        await api.put(`/products/${editingProduct.id}`, {
+          name,
+          quantity: Number(quantity),
+          expiry_date: expiryDate,
+          obs
+        });
+      } else {
+        await api.post('/products', {
+          name,
+          quantity: Number(quantity),
+          expiry_date: expiryDate,
+          obs
+        });
+      }
 
       setName(''); setQuantity(''); setExpiryDate(''); setObs('');
       setIsModalOpen(false);
@@ -151,7 +179,10 @@ export default function Pantry() {
             filteredProducts.map((p) => (
               <div key={p.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex justify-between items-start font-bold text-slate-700">
-                  <span className="truncate pr-2">{p.name}</span>
+                  <div className="flex flex-col overflow-hidden pr-2">
+                    <span className="truncate text-lg">{p.name}</span>
+                    {p.obs && <span className="truncate text-xs text-slate-400 font-normal">{p.obs}</span>}
+                  </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
                       <button
@@ -172,6 +203,13 @@ export default function Pantry() {
                         +
                       </button>
                     </div>
+                    <button
+                      onClick={() => handleOpenModal(p)}
+                      className="text-slate-300 hover:text-emerald-500 transition-colors p-1"
+                      title="Editar item"
+                    >
+                      <Pencil size={18} />
+                    </button>
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="text-slate-300 hover:text-red-500 transition-colors p-1"
@@ -197,22 +235,22 @@ export default function Pantry() {
 
       {/* Botão Flutuante */}
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => handleOpenModal()}
         className="fixed bottom-8 right-8 bg-emerald-600 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform"
       >
         <Plus size={30} />
       </button>
 
-      {/* MODAL DE CADASTRO */}
+      {/* MODAL DE CADASTRO/EDIÇÃO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800">Novo Produto</h3>
+              <h3 className="text-xl font-bold text-slate-800">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h3>
               <button onClick={() => setIsModalOpen(false)}><X className="text-slate-400" /></button>
             </div>
 
-            <form onSubmit={handleAddProduct} className="space-y-4">
+            <form onSubmit={handleSaveProduct} className="space-y-4">
               <input
                 placeholder="Nome do produto (ex: Leite)"
                 className="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -236,7 +274,7 @@ export default function Pantry() {
                 value={obs} onChange={e => setObs(e.target.value)}
               />
               <button className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition-colors">
-                Salvar na Despensa
+                {editingProduct ? 'Salvar Alterações' : 'Salvar na Despensa'}
               </button>
             </form>
           </div>

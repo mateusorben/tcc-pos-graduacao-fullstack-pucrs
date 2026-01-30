@@ -158,6 +158,33 @@ router.post('/users', async (req, res) => {
     }
 });
 
+router.put('/products/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, obs, quantity, min_quantity, expiry_date, category_id } = req.body;
+        const userId = req.userId;
+
+        const query = `
+            UPDATE products 
+            SET name = $1, obs = $2, quantity = $3, min_quantity = $4, expiry_date = $5, category_id = $6
+            WHERE id = $7 AND user_id = $8
+            RETURNING *;
+        `;
+
+        const values = [name, obs, quantity, min_quantity || 0, expiry_date, category_id, id, userId];
+        const result = await db.query(query, values);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Produto não encontrado ou sem permissão.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao atualizar produto.' });
+    }
+});
+
 router.put('/users', authMiddleware, async (req, res) => {
     const { name, password } = req.body;
     const userId = req.userId;
