@@ -1,31 +1,30 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Package, Calendar, LogOut, Plus, X, Trash2, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
+import { Calendar, Plus, X, Trash2, Search } from 'lucide-react';
 
 export default function Pantry() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  
+
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [obs, setObs] = useState('');
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const diff = new Date(p.expiry_date) - new Date();
     const days = diff / (1000 * 60 * 60 * 24);
-    
+
     if (filterStatus === 'expired') return matchesSearch && days < 0;
     if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < 7;
-    
+
     return matchesSearch;
   });
 
@@ -45,23 +44,23 @@ export default function Pantry() {
   async function handleAddProduct(e) {
     e.preventDefault();
     try {
-      await api.post('/products', { 
-        name, 
-        quantity: Number(quantity), 
-        expiry_date: expiryDate, 
-        obs 
+      await api.post('/products', {
+        name,
+        quantity: Number(quantity),
+        expiry_date: expiryDate,
+        obs
       });
-      
+
       setName(''); setQuantity(''); setExpiryDate(''); setObs('');
       setIsModalOpen(false);
-      
+
       loadProducts();
     } catch (err) {
       const message = err.response?.data?.error || "Erro desconhecido no servidor";
       const status = err.response?.status;
-      
+
       alert(`Erro ${status}: ${message}`);
-      
+
       if (status === 401 || status === 403) {
         console.warn("Sua sessão expirou ou o token é inválido.");
       }
@@ -92,8 +91,8 @@ export default function Pantry() {
 
     try {
       await api.patch(`/products/${id}/quantity`, { quantity: newQuantity });
-      
-      setProducts(products.map(p => 
+
+      setProducts(products.map(p =>
         p.id === id ? { ...p, quantity: newQuantity } : p
       ));
     } catch (err) {
@@ -101,24 +100,17 @@ export default function Pantry() {
     }
   }
 
-  function handleLogout() {
-    localStorage.clear();
-    navigate('/login');
-  }
+
 
   return (
     <div className="min-h-screen bg-slate-50 relative">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-slate-200 px-4 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-emerald-600 flex items-center gap-2"><Package /> Smart Pantry</h1>
-        <button onClick={handleLogout} className="text-slate-400 hover:text-red-500"><LogOut size={20} /></button>
-      </nav>
+      <Header />
 
       <main className="max-w-4xl mx-auto p-6">
         {/* CABEÇALHO E BUSCA */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h2 className="text-2xl font-bold text-slate-800">Meus Itens</h2>
-          
+
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -133,19 +125,19 @@ export default function Pantry() {
 
         {/* BOTÕES DE FILTRO RÁPIDO */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          <button 
+          <button
             onClick={() => setFilterStatus('all')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'all' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
           >
             Todos
           </button>
-          <button 
+          <button
             onClick={() => setFilterStatus('expired')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'expired' ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
           >
             Vencidos
           </button>
-          <button 
+          <button
             onClick={() => setFilterStatus('warning')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === 'warning' ? 'bg-amber-500 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}
           >
@@ -162,25 +154,25 @@ export default function Pantry() {
                   <span className="truncate pr-2">{p.name}</span>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
-                      <button 
+                      <button
                         onClick={() => updateQuantity(p.id, p.quantity - 1)}
                         className="w-7 h-7 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         -
                       </button>
-                      
+
                       <span className="text-emerald-700 font-bold min-w-[20px] text-center">
                         {p.quantity}
                       </span>
-                      
-                      <button 
+
+                      <button
                         onClick={() => updateQuantity(p.id, p.quantity + 1)}
                         className="w-7 h-7 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                       >
                         +
                       </button>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleDelete(p.id)}
                       className="text-slate-300 hover:text-red-500 transition-colors p-1"
                       title="Excluir item"
@@ -204,7 +196,7 @@ export default function Pantry() {
       </main>
 
       {/* Botão Flutuante */}
-      <button 
+      <button
         onClick={() => setIsModalOpen(true)}
         className="fixed bottom-8 right-8 bg-emerald-600 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform"
       >
@@ -221,25 +213,25 @@ export default function Pantry() {
             </div>
 
             <form onSubmit={handleAddProduct} className="space-y-4">
-              <input 
-                placeholder="Nome do produto (ex: Leite)" 
+              <input
+                placeholder="Nome do produto (ex: Leite)"
                 className="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                 value={name} onChange={e => setName(e.target.value)} required
               />
               <div className="flex gap-4">
-                <input 
-                  type="number" placeholder="Qtd" 
+                <input
+                  type="number" placeholder="Qtd"
                   className="w-1/3 p-3 bg-slate-100 rounded-lg outline-none"
                   value={quantity} onChange={e => setQuantity(e.target.value)} required
                 />
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="w-2/3 p-3 bg-slate-100 rounded-lg outline-none"
                   value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required
                 />
               </div>
-              <textarea 
-                placeholder="Observações (opcional)" 
+              <textarea
+                placeholder="Observações (opcional)"
                 className="w-full p-3 bg-slate-100 rounded-lg outline-none h-24"
                 value={obs} onChange={e => setObs(e.target.value)}
               />

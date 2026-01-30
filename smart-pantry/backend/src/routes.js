@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
     try {
 
         const userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-        
+
         if (userResult.rows.length === 0) {
             return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
         }
@@ -52,7 +52,7 @@ router.get('/products', authMiddleware, async (req, res) => {
     try {
         const query = 'SELECT * FROM products WHERE user_id = $1 ORDER BY expiry_date ASC';
         const result = await db.query(query, [req.userId]);
-        
+
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -74,11 +74,11 @@ router.post('/products', authMiddleware, async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *;
         `;
-        
+
         const values = [name, obs, quantity || 1, min_quantity || 0, expiry_date, category_id, userId];
-        
+
         const result = await db.query(query, values);
-        
+
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error(err);
@@ -155,6 +155,44 @@ router.post('/users', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro interno ao criar usuário.' });
+    }
+});
+
+router.put('/users', authMiddleware, async (req, res) => {
+    const { name, password } = req.body;
+    const userId = req.userId;
+
+    if (!name && !password) {
+        return res.status(400).json({ error: 'Informe ao menos um campo para atualizar (nome ou senha).' });
+    }
+
+    try {
+        let query;
+        let values;
+
+        if (password) {
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            query = 'UPDATE users SET name = COALESCE($1, name), password = $2 WHERE id = $3 RETURNING id, name, email';
+            values = [name || null, hashedPassword, userId];
+        } else {
+            query = 'UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, email';
+            values = [name, userId];
+        }
+
+        const result = await db.query(query, values);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        res.json({
+            message: 'Informações atualizadas com sucesso!',
+            user: result.rows[0]
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao atualizar dados do usuário.' });
     }
 });
 
