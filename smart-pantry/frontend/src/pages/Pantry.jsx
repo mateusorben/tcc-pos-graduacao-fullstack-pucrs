@@ -77,15 +77,29 @@ export default function Pantry() {
   }
 
   async function handleDelete(id) {
-  if (!window.confirm("Deseja realmente remover este item?")) return;
+    if (!window.confirm("Deseja realmente remover este item?")) return;
 
-  try {
-    await api.delete(`/products/${id}`);
-    setProducts(products.filter(p => p.id !== id));
-  } catch (err) {
-    alert("Erro ao excluir produto");
+    try {
+      await api.delete(`/products/${id}`);
+      setProducts(products.filter(p => p.id !== id));
+    } catch (err) {
+      alert("Erro ao excluir produto");
+    }
   }
-}
+
+  async function updateQuantity(id, newQuantity) {
+    if (newQuantity < 0) return;
+
+    try {
+      await api.patch(`/products/${id}/quantity`, { quantity: newQuantity });
+      
+      setProducts(products.map(p => 
+        p.id === id ? { ...p, quantity: newQuantity } : p
+      ));
+    } catch (err) {
+      alert("Erro ao atualizar quantidade");
+    }
+  }
 
   function handleLogout() {
     localStorage.clear();
@@ -147,7 +161,25 @@ export default function Pantry() {
                 <div className="flex justify-between items-start font-bold text-slate-700">
                   <span className="truncate pr-2">{p.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-emerald-600 whitespace-nowrap">{p.quantity} un</span>
+                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                      <button 
+                        onClick={() => updateQuantity(p.id, p.quantity - 1)}
+                        className="w-7 h-7 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        -
+                      </button>
+                      
+                      <span className="text-emerald-700 font-bold min-w-[20px] text-center">
+                        {p.quantity}
+                      </span>
+                      
+                      <button 
+                        onClick={() => updateQuantity(p.id, p.quantity + 1)}
+                        className="w-7 h-7 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
                     <button 
                       onClick={() => handleDelete(p.id)}
                       className="text-slate-300 hover:text-red-500 transition-colors p-1"

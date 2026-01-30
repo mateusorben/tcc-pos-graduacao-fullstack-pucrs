@@ -106,6 +106,27 @@ router.delete('/products/:id', authMiddleware, async (req, res) => {
     }
 });
 
+router.patch('/products/:id/quantity', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { quantity } = req.body;
+        const userId = req.userId;
+
+        const result = await db.query(
+            'UPDATE products SET quantity = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+            [quantity, id, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Produto não encontrado.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao atualizar quantidade.' });
+    }
+});
+
 router.post('/users', async (req, res) => {
     const { name, email, password } = req.body;
 
