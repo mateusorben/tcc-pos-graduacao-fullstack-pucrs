@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import api from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
+import { AuthService } from '../services/auth.service';
 
 export default function Register() {
     const [name, setName] = useState('');
@@ -13,7 +13,7 @@ export default function Register() {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.post('/users', { name, email, password });
+            await AuthService.register({ name, email, password });
             alert('Cadastro realizado com sucesso! Faça login para continuar.');
             navigate('/login');
         } catch (err) {

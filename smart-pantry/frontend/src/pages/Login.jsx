@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import api from '../services/api';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { AuthService } from '../services/auth.service';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,14 +8,30 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [serverStatus, setServerStatus] = useState('checking'); // checking, online, offline
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        await AuthService.getVapidKey(); // Use simple endpoint to test connection
+        setServerStatus('online');
+      } catch (error) {
+        console.error("Server check failed:", error);
+        setServerStatus('offline');
+      }
+    };
+    checkStatus();
+  }, []);
+
   async function handleLogin(e) {
     e.preventDefault();
+    console.log("Handle Login Called");
     setLoading(true);
     try {
-      const response = await api.post('/login', { email, password });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/pantry');
+      const data = await AuthService.login({ email, password });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/');
     } catch (err) {
       alert(err.response?.data?.error || "Erro ao conectar com o servidor");
     } finally {
@@ -26,7 +42,12 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
-        <h1 className="text-3xl font-extrabold text-emerald-600 text-center mb-2">Smart Pantry</h1>
+        <div className="flex flex-col items-center mb-2">
+          <h1 className="text-3xl font-extrabold text-emerald-600 text-center">Smart Pantry</h1>
+          {serverStatus === 'checking' && <span className="text-xs text-slate-400">Verificando servidor...</span>}
+          {serverStatus === 'online' && <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">● Servidor Online</span>}
+          {serverStatus === 'offline' && <span className="text-xs text-rose-500 font-bold flex items-center gap-1">● Servidor Offline (Erro de conexão)</span>}
+        </div>
         <p className="text-slate-500 text-center mb-8 text-sm">Gerencie sua despensa de forma inteligente</p>
 
         <form onSubmit={handleLogin} className="space-y-4">

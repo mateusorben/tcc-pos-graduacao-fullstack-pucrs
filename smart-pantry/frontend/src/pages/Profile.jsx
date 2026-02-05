@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
 import Header from '../components/Header';
 import { Save, Lock, User } from 'lucide-react';
+import { toast } from 'sonner';
+import { AuthService } from '../services/auth.service';
 
 export default function Profile() {
     const [name, setName] = useState('');
@@ -23,30 +24,30 @@ export default function Profile() {
         e.preventDefault();
 
         if (password && password !== confirmPassword) {
-            alert("As senhas não coincidem!");
+            toast.error("As senhas não coincidem!");
             return;
         }
 
         setLoading(true);
         try {
-            const response = await api.put('/users', {
+            const data = await AuthService.updateProfile({
                 name,
                 password: password || undefined
             });
 
             // Atualiza dados no localStorage
-            const newUser = { ...JSON.parse(localStorage.getItem('user')), name: response.data.user.name };
+            const newUser = { ...JSON.parse(localStorage.getItem('user')), name: data.user.name };
             localStorage.setItem('user', JSON.stringify(newUser));
 
-            alert('Perfil atualizado com sucesso!');
+            toast.success('Perfil atualizado com sucesso!');
             setPassword('');
             setConfirmPassword('');
 
-            // Força recarregamento para atualizar iniciais no Header se necessário
-            window.location.reload();
+            // Pequeno delay para recarregar e mostrar o novo nome no header
+            setTimeout(() => window.location.reload(), 1500);
 
         } catch (err) {
-            alert(err.response?.data?.error || "Erro ao atualizar perfil.");
+            toast.error(err.response?.data?.error || "Erro ao atualizar perfil.");
         } finally {
             setLoading(false);
         }
