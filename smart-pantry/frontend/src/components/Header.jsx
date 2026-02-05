@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon } from 'lucide-react';
+import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon, TrendingUp, Tag } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -37,6 +37,14 @@ export default function Header() {
             </Link>
 
             <div className="flex items-center gap-4">
+                <Link
+                    to="/dashboard"
+                    className="p-2 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors relative"
+                    title="Dashboard"
+                >
+                    <TrendingUp size={24} />
+                </Link>
+
                 <Link
                     to="/shopping-list"
                     className="p-2 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors relative"
@@ -78,6 +86,14 @@ export default function Header() {
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 <Settings size={18} /> Meu Perfil
+                            </Link>
+
+                            <Link
+                                to="/categories"
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full text-left font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <Tag size={18} /> Categorias
                             </Link>
 
                             <button
