@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
 import Header from '../components/Header';
 import { Calendar, Plus, X, Trash2, Search, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
+import ConfirmModal from '../components/ConfirmModal';
+import { ProductService } from '../services/product.service';
+import { CategoryService } from '../services/category.service';
+import { APP_CONFIG, COLORS } from '../config/constants';
 
 export default function Pantry() {
+  // ... (keep state exactly as is)
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -19,6 +27,16 @@ export default function Pantry() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    loadProducts();
+    CategoryService.getAll()
+      .then(data => setCategories(data))
+      .catch(err => console.error(err));
+  }, []);
+
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -26,23 +44,22 @@ export default function Pantry() {
     const days = diff / (1000 * 60 * 60 * 24);
 
     if (filterStatus === 'expired') return matchesSearch && days < 0;
-    if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < 7;
+    if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < APP_CONFIG.EXPIRY_WARNING_DAYS;
 
     return matchesSearch;
   });
 
   async function loadProducts() {
     try {
-      const response = await api.get('/products');
-      setProducts(response.data);
+      const data = await ProductService.getAll();
+      setProducts(data);
     } catch (err) {
       console.error(err);
+      toast.error('Erro ao carregar produtos.');
     } finally {
       setLoading(false);
     }
   }
-
-  useEffect(() => { loadProducts(); }, []);
 
   function handleOpenModal(product = null) {
     if (product) {
@@ -52,6 +69,7 @@ export default function Pantry() {
       setMinQuantity(product.min_quantity || '');
       setExpiryDate(new Date(product.expiry_date).toISOString().split('T')[0]);
       setObs(product.obs || '');
+      setCategoryId(product.category_id || '');
     } else {
       setEditingProduct(null);
       setName('');
@@ -59,6 +77,7 @@ export default function Pantry() {
       setMinQuantity('');
       setExpiryDate('');
       setObs('');
+      setCategoryId('');
     }
     setIsModalOpen(true);
   }
@@ -71,47 +90,53 @@ export default function Pantry() {
         quantity: Number(quantity),
         min_quantity: Number(minQuantity),
         expiry_date: expiryDate,
-        obs
+        obs,
+        category_id: Number(categoryId) || null
       };
 
       if (editingProduct) {
-        await api.put(`/products/${editingProduct.id}`, payload);
+        await ProductService.update(editingProduct.id, payload);
+        toast.success('Produto atualizado com sucesso!');
       } else {
-        await api.post('/products', payload);
+        await ProductService.create(payload);
+        toast.success('Produto adicionado com sucesso!');
       }
 
-      setName(''); setQuantity(''); setMinQuantity(''); setExpiryDate(''); setObs('');
+      setName(''); setQuantity(''); setMinQuantity(''); setExpiryDate(''); setObs(''); setCategoryId('');
       setIsModalOpen(false);
 
       loadProducts();
     } catch (err) {
       const message = err.response?.data?.error || "Erro desconhecido no servidor";
-      const status = err.response?.status;
-
-      alert(`Erro ${status}: ${message}`);
-
-      if (status === 401 || status === 403) {
-        console.warn("Sua sessão expirou ou o token é inválido.");
-      }
+      toast.error(`Erro: ${message}`);
     }
   }
 
   function getExpiryColor(date) {
     const diff = new Date(date) - new Date();
     const days = diff / (1000 * 60 * 60 * 24);
-    if (days < 0) return 'text-rose-500 font-bold';
-    if (days < 7) return 'text-amber-500 font-bold';
-    return 'text-slate-500';
+    if (days < 0) return COLORS.EXPIRY.EXPIRED;
+    if (days < APP_CONFIG.EXPIRY_WARNING_DAYS) return COLORS.EXPIRY.WARNING;
+    return COLORS.EXPIRY.SAFE;
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm("Deseja realmente remover este item?")) return;
+  function confirmDelete(id) {
+    setProductToDelete(id);
+    setDeleteModalOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!productToDelete) return;
 
     try {
-      await api.delete(`/products/${id}`);
-      setProducts(products.filter(p => p.id !== id));
+      await ProductService.delete(productToDelete);
+      setProducts(products.filter(p => p.id !== productToDelete));
+      toast.success('Produto removido.');
     } catch (err) {
-      alert("Erro ao excluir produto");
+      toast.error("Erro ao excluir produto");
+    } finally {
+      setDeleteModalOpen(false);
+      setProductToDelete(null);
     }
   }
 
@@ -119,17 +144,15 @@ export default function Pantry() {
     if (newQuantity < 0) return;
 
     try {
-      await api.patch(`/products/${id}/quantity`, { quantity: newQuantity });
+      await ProductService.updateQuantity(id, newQuantity);
 
       setProducts(products.map(p =>
         p.id === id ? { ...p, quantity: newQuantity } : p
       ));
     } catch (err) {
-      alert("Erro ao atualizar quantidade");
+      toast.error("Erro ao atualizar quantidade");
     }
   }
-
-
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 relative transition-colors duration-300">
@@ -212,7 +235,7 @@ export default function Pantry() {
                       <Pencil size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => confirmDelete(p.id)}
                       className="text-slate-300 hover:text-rose-500 transition-colors p-1"
                       title="Excluir item"
                     >
@@ -228,7 +251,7 @@ export default function Pantry() {
             ))
           ) : (
             <div className="col-span-full py-20 text-center bg-white dark:bg-zinc-900 rounded-3xl border-2 border-dashed border-slate-100 dark:border-zinc-800">
-              <p className="text-slate-400">Nenhum item encontrado para esta busca ou filtro.</p>
+              <p className="text-slate-400">Nenhum item encontrada para esta busca ou filtro.</p>
             </div>
           )}
         </div>
@@ -241,6 +264,17 @@ export default function Pantry() {
       >
         <Plus size={30} />
       </button>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Produto"
+        message="Tem certeza que deseja remover este item da sua despensa? Esta ação não pode ser desfeita."
+        confirmText="Sim, excluir"
+        isDangerous={true}
+      />
 
       {/* MODAL DE CADASTRO/EDIÇÃO */}
       {isModalOpen && (
@@ -257,6 +291,15 @@ export default function Pantry() {
                 className="w-full p-3 bg-slate-100 dark:bg-zinc-800 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-colors"
                 value={name} onChange={e => setName(e.target.value)} required
               />
+              <select
+                className="w-full p-3 bg-slate-100 dark:bg-zinc-800 dark:text-white rounded-lg outline-none transition-colors"
+                value={categoryId} onChange={e => setCategoryId(e.target.value)}
+              >
+                <option value="">Selecione uma Categoria</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
               <div className="flex gap-4">
                 <input
                   type="number" placeholder="Qtd"

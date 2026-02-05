@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
 import Header from '../components/Header';
 import { ShoppingCart, AlertTriangle, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { ShoppingListService } from '../services/shopping-list.service';
 
 export default function ShoppingList() {
     const [items, setItems] = useState([]);
@@ -9,11 +10,11 @@ export default function ShoppingList() {
 
     async function loadShoppingList() {
         try {
-            const response = await api.get('/shopping-list');
-            setItems(response.data);
+            const data = await ShoppingListService.getSuggested();
+            setItems(data);
         } catch (err) {
             console.error(err);
-            alert("Erro ao carregar lista de compras.");
+            toast.error("Erro ao carregar lista de compras.");
         } finally {
             setLoading(false);
         }
