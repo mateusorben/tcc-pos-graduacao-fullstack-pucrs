@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  // Dinamicamente usa o hostname atual (localhost ou IP da rede)
+  baseURL: import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`,
 });
 
 api.interceptors.request.use((config) => {
