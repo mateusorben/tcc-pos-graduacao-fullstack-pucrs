@@ -8,10 +8,14 @@ const ProductController = require('./controllers/ProductController');
 const CategoryController = require('./controllers/CategoryController');
 const DashboardController = require('./controllers/DashboardController');
 
+const authLimiter = require('./middlewares/authLimiter');
+const { validateRegister, validateLogin } = require('./middlewares/validators');
+
 // --- AUTH / USER ---
-router.post('/login', UserController.login);
-router.post('/users', UserController.register);
+router.post('/login', authLimiter, validateLogin, UserController.login);
+router.post('/users', authLimiter, validateRegister, UserController.register);
 router.put('/users', authMiddleware, UserController.updateProfile);
+router.post('/logout', UserController.logout);
 
 // --- SUBSCRIPTIONS ---
 router.get('/vapid-public-key', UserController.getVapidKey);

@@ -20,11 +20,26 @@ const limiter = rateLimit({
 });
 
 
-app.use(cors()); // Permite todas as origens (ideal para desenvolvimento local/rede)
-app.use(helmet()); // Security Headers
+const cookieParser = require('cookie-parser');
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Must set exact origin for credentials
+  credentials: true,
+};
+
+const hpp = require('hpp');
+
+app.use(cors(corsOptions));
+app.use(helmet());
+app.use(hpp()); // Protect against HTTP Parameter Pollution
 app.use(limiter);
 app.use(express.json());
+app.use(cookieParser());
 app.use('/api', routes);
+
+// Global Error Handler (Must be after routes)
+const errorHandler = require('./middlewares/errorMiddleware');
+app.use(errorHandler);
 
 app.get('/api/status', async (req, res) => {
   try {
