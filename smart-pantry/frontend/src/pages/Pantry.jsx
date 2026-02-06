@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Header from '../components/Header';
 import { Calendar, Plus, X, Trash2, Search, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,7 +8,6 @@ import { CategoryService } from '../services/category.service';
 import { APP_CONFIG, COLORS } from '../config/constants';
 
 export default function Pantry() {
-  // ... (keep state exactly as is)
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -37,17 +36,19 @@ export default function Pantry() {
       .catch(err => console.error(err));
   }, []);
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const diff = new Date(p.expiry_date) - new Date();
-    const days = diff / (1000 * 60 * 60 * 24);
+      const diff = new Date(p.expiry_date) - new Date();
+      const days = diff / (1000 * 60 * 60 * 24);
 
-    if (filterStatus === 'expired') return matchesSearch && days < 0;
-    if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < APP_CONFIG.EXPIRY_WARNING_DAYS;
+      if (filterStatus === 'expired') return matchesSearch && days < 0;
+      if (filterStatus === 'warning') return matchesSearch && days >= 0 && days < APP_CONFIG.EXPIRY_WARNING_DAYS;
 
-    return matchesSearch;
-  });
+      return matchesSearch;
+    });
+  }, [products, searchTerm, filterStatus]);
 
   async function loadProducts() {
     try {
