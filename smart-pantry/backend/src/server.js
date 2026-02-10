@@ -4,7 +4,7 @@ const db = require('./database');
 const routes = require('./routes');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-require('./scheduler'); // Init Scheduler
+require('./scheduler');
 
 const app = express();
 
@@ -23,7 +23,30 @@ const limiter = rateLimit({
 const cookieParser = require('cookie-parser');
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Must set exact origin for credentials
+  origin: (origin, callback) => {
+
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+
+    const isLocalNetwork = /^http:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(origin);
+
+    if (isLocalNetwork) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 };
 
@@ -31,7 +54,7 @@ const hpp = require('hpp');
 
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(hpp()); // Protect against HTTP Parameter Pollution
+app.use(hpp());
 app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
@@ -49,9 +72,9 @@ app.get('/api/status', async (req, res) => {
       db_time: result.rows[0].now
     });
   } catch (err) {
-    console.error('Database Status Error:', err); // Log internally
+    console.error('Database Status Error:', err);
     res.status(500).json({
-      error: 'Erro ao conectar ao banco de dados' // Generic message for user
+      error: 'Erro ao conectar ao banco de dados'
     });
   }
 });

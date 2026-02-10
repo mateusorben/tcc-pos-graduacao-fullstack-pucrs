@@ -12,7 +12,7 @@ async function migrate() {
     try {
         await client.query('BEGIN');
 
-        // 1. Garante que a tabela de controle de migrations existe
+
         await client.query(`
             CREATE TABLE IF NOT EXISTS migrations (
                 id SERIAL PRIMARY KEY,
@@ -21,16 +21,16 @@ async function migrate() {
             );
         `);
 
-        // 2. Lê os arquivos da pasta
+
         const files = fs.readdirSync(MIGRATIONS_DIR)
             .filter(f => f.endsWith('.sql'))
-            .sort(); // Garante ordem alfabética (001, 002...)
+            .sort();
 
-        // 3. Verifica quais já foram executadas
+
         const executedMigrationsResult = await client.query('SELECT name FROM migrations');
         const executedMigrations = new Set(executedMigrationsResult.rows.map(r => r.name));
 
-        // 4. Executa as pendentes
+
         for (const file of files) {
             if (!executedMigrations.has(file)) {
                 console.log(`Executing migration: ${file}`);
@@ -41,7 +41,6 @@ async function migrate() {
 
                 console.log(`✅ ${file} completed.`);
             } else {
-                // console.log(`Skipping ${file} (already executed).`);
             }
         }
 

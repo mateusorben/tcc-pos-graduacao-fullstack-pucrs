@@ -2,11 +2,11 @@ const db = require('../database');
 
 class DashboardService {
     async getStats(userId) {
-        // 1. Total Products
+
         const totalResult = await db.query('SELECT COUNT(*) FROM products WHERE user_id = $1', [userId]);
         const totalProducts = parseInt(totalResult.rows[0].count);
 
-        // 2. Products by Category
+
         const categoryResult = await db.query(`
         SELECT c.name, COUNT(p.id) as count 
         FROM products p
@@ -20,7 +20,7 @@ class DashboardService {
             count: parseInt(row.count)
         }));
 
-        // 3. Expiring Soon (7 days)
+
         const expiringResult = await db.query(`
         SELECT COUNT(*) FROM products 
         WHERE user_id = $1 
@@ -29,7 +29,7 @@ class DashboardService {
     `, [userId]);
         const expiringCount = parseInt(expiringResult.rows[0].count);
 
-        // 4. Shopping List Count
+
         const listResult = await db.query(`
         SELECT COUNT(*) FROM products 
         WHERE user_id = $1 
@@ -37,7 +37,7 @@ class DashboardService {
     `, [userId]);
         const listCount = parseInt(listResult.rows[0].count);
 
-        // 5. Expired Count (Already gone)
+
         const expiredResult = await db.query(`
         SELECT COUNT(*) FROM products 
         WHERE user_id = $1 

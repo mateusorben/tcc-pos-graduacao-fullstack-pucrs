@@ -7,6 +7,7 @@ const UserController = require('./controllers/UserController');
 const ProductController = require('./controllers/ProductController');
 const CategoryController = require('./controllers/CategoryController');
 const DashboardController = require('./controllers/DashboardController');
+const StorageLocationController = require('./controllers/StorageLocationController');
 
 const authLimiter = require('./middlewares/authLimiter');
 const { validateRegister, validateLogin } = require('./middlewares/validators');
@@ -28,6 +29,12 @@ router.put('/products/:id', authMiddleware, ProductController.updateProduct);
 router.delete('/products/:id', authMiddleware, ProductController.deleteProduct);
 router.patch('/products/:id/quantity', authMiddleware, ProductController.updateQuantity);
 
+// Batches
+router.get('/products/:id/batches', authMiddleware, ProductController.getBatches);
+router.post('/products/:id/batches', authMiddleware, ProductController.addBatch);
+router.put('/products/:id/batches/:batchId', authMiddleware, ProductController.updateBatch);
+router.delete('/products/:id/batches/:batchId', authMiddleware, ProductController.deleteBatch);
+
 // --- CATEGORIES ---
 router.get('/categories', authMiddleware, CategoryController.getCategories);
 router.post('/categories', authMiddleware, CategoryController.createCategory);
@@ -37,5 +44,11 @@ router.get('/shopping-list', authMiddleware, ProductController.getShoppingList);
 
 // --- DASHBOARD ---
 router.get('/dashboard/stats', authMiddleware, DashboardController.getStats);
+
+// --- STORAGE LOCATIONS ---
+router.get('/storage-locations', authMiddleware, StorageLocationController.getAll);
+router.post('/storage-locations', authMiddleware, StorageLocationController.create);
+router.put('/storage-locations/:id', authMiddleware, StorageLocationController.update);
+router.delete('/storage-locations/:id', authMiddleware, StorageLocationController.delete);
 
 module.exports = router;

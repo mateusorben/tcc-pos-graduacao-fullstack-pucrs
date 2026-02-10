@@ -2,8 +2,29 @@ const ProductService = require('../services/ProductService');
 const asyncHandler = require('../utils/asyncHandler');
 
 exports.getProducts = asyncHandler(async (req, res) => {
-    const products = await ProductService.getAll(req.userId);
+    const { filter } = req.query;
+    const products = await ProductService.getAll(req.userId, filter);
     res.json(products);
+});
+
+exports.getBatches = asyncHandler(async (req, res) => {
+    const batches = await ProductService.getBatches(req.userId, req.params.id);
+    res.json(batches);
+});
+
+exports.addBatch = asyncHandler(async (req, res) => {
+    const product = await ProductService.addBatch(req.userId, req.params.id, req.body);
+    res.json(product);
+});
+
+exports.updateBatch = asyncHandler(async (req, res) => {
+    const product = await ProductService.updateBatch(req.userId, req.params.batchId, req.body.quantity);
+    res.json(product);
+});
+
+exports.deleteBatch = asyncHandler(async (req, res) => {
+    const product = await ProductService.deleteBatch(req.userId, req.params.batchId);
+    res.json(product);
 });
 
 exports.createProduct = asyncHandler(async (req, res) => {
