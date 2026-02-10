@@ -4,7 +4,13 @@ import api from '../services/api';
 import { Bell } from 'lucide-react';
 
 export default function NotificationManager() {
-    const [permission, setPermission] = useState(Notification.permission);
+    // Safe check for Notification API (iOS/Safari might not have it in all contexts)
+    const [permission, setPermission] = useState(() => {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            return Notification.permission;
+        }
+        return 'denied'; // Default to denied if not supported
+    });
 
     useEffect(() => {
         if (permission === 'granted') {
@@ -49,8 +55,16 @@ export default function NotificationManager() {
     }
 
     async function requestPermission() {
-        const result = await Notification.requestPermission();
-        setPermission(result);
+        if (!('Notification' in window)) {
+            alert('Este navegador não suporta notificações.');
+            return;
+        }
+        try {
+            const result = await Notification.requestPermission();
+            setPermission(result);
+        } catch (error) {
+            console.error('Erro ao solicitar permissão de notificação:', error);
+        }
     }
 
     if (permission === 'granted') return null; // Already subscribed

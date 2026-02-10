@@ -6,6 +6,7 @@ import Profile from './pages/Profile';
 import ShoppingList from './pages/ShoppingList';
 import Dashboard from './pages/Dashboard';
 import Categories from './pages/Categories';
+import StorageLocations from './pages/StorageLocations';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -39,6 +40,11 @@ function App() {
             path="/dashboard"
             element={<ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>} />
+          <Route
+            path="/storage-locations"
+            element={<ProtectedRoute>
+              <StorageLocations />
             </ProtectedRoute>} />
           <Route
             path="/shopping-list"

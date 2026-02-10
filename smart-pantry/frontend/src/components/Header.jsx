@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon, TrendingUp, Tag } from 'lucide-react';
+import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon, TrendingUp, Tag, LayoutGrid } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -38,6 +38,14 @@ export default function Header() {
 
             <div className="flex items-center gap-4">
                 <Link
+                    to="/pantry"
+                    className="p-2 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors relative"
+                    title="Minha Despensa"
+                >
+                    <LayoutGrid size={24} />
+                </Link>
+
+                <Link
                     to="/dashboard"
                     className="p-2 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-full transition-colors relative"
                     title="Dashboard"
@@ -73,7 +81,10 @@ export default function Header() {
 
                             <button
                                 type="button"
-                                onClick={toggleTheme}
+                                onClick={() => {
+                                    toggleTheme();
+                                    setIsMenuOpen(false);
+                                }}
                                 className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full text-left font-medium"
                             >
                                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -94,6 +105,14 @@ export default function Header() {
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 <Tag size={18} /> Categorias
+                            </Link>
+
+                            <Link
+                                to="/storage-locations"
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full text-left font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <Package size={18} /> Locais
                             </Link>
 
                             <button

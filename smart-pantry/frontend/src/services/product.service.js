@@ -1,8 +1,8 @@
 import api from './api';
 
 export const ProductService = {
-    getAll: async () => {
-        const response = await api.get('/products');
+    getAll: async (filter) => {
+        const response = await api.get('/products', { params: { filter } });
         return response.data;
     },
 
@@ -23,6 +23,26 @@ export const ProductService = {
 
     updateQuantity: async (id, quantity) => {
         const response = await api.patch(`/products/${id}/quantity`, { quantity });
+        return response.data;
+    },
+
+    getBatches: async (id) => {
+        const response = await api.get(`/products/${id}/batches`);
+        return response.data;
+    },
+
+    addBatch: async (id, batchData) => {
+        const response = await api.post(`/products/${id}/batches`, batchData);
+        return response.data;
+    },
+
+    updateBatch: async (id, batchId, quantity) => {
+        const response = await api.put(`/products/${id}/batches/${batchId}`, { quantity });
+        return response.data;
+    },
+
+    deleteBatch: async (id, batchId) => {
+        const response = await api.delete(`/products/${id}/batches/${batchId}`);
         return response.data;
     },
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { Save, Lock, User } from 'lucide-react';
+import { Save, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthService } from '../services/auth.service';
 
@@ -9,6 +9,7 @@ export default function Profile() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -92,20 +93,31 @@ export default function Profile() {
                                 <Lock size={18} className="text-slate-400 dark:text-zinc-500" /> Alterar Senha
                             </h3>
                             <div className="space-y-4">
-                                <input
-                                    type="password"
-                                    placeholder="Nova senha (deixe em branco para manter)"
-                                    className="w-full p-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white transition-colors"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                />
-                                <input
-                                    type="password"
-                                    placeholder="Confirme a nova senha"
-                                    className="w-full p-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white transition-colors"
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Nova senha (deixe em branco para manter)"
+                                        className="w-full p-3 pr-10 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white transition-colors"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Confirme a nova senha"
+                                        className="w-full p-3 pr-10 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white transition-colors"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </div>
 

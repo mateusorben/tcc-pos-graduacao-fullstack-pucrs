@@ -3,7 +3,14 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [theme, setTheme] = useState(() => {
+        try {
+            return localStorage.getItem('theme') || 'light';
+        } catch (error) {
+            console.warn('Failed to access localStorage for theme:', error);
+            return 'light';
+        }
+    });
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -12,7 +19,11 @@ export function ThemeProvider({ children }) {
         } else {
             root.classList.remove('dark');
         }
-        localStorage.setItem('theme', theme);
+        try {
+            localStorage.setItem('theme', theme);
+        } catch (error) {
+            console.warn('Failed to save theme to localStorage:', error);
+        }
     }, [theme]);
 
     function toggleTheme() {
