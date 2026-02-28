@@ -105,14 +105,30 @@ class ProductService {
     async addBatch(userId, productId, data) {
         const { quantity, expiry_date } = data;
 
-
         const check = await db.query('SELECT id FROM products WHERE id = $1 AND user_id = $2', [productId, userId]);
         if (check.rowCount === 0) throw new AppError('Produto não encontrado.', 404);
 
-        await db.query(`
-            INSERT INTO batches (product_id, quantity, expiry_date)
-            VALUES ($1, $2, $3)
-        `, [productId, quantity, expiry_date]);
+        const batchCheck = await db.query(
+            'SELECT id FROM batches WHERE product_id = $1 AND expiry_date = $2::DATE',
+            [productId, expiry_date]
+        );
+
+        if (batchCheck.rowCount > 0) {
+            await db.query(
+                'UPDATE batches SET quantity = quantity + $1 WHERE id = $2',
+                [quantity, batchCheck.rows[0].id]
+            );
+        } else {
+            await db.query(`
+                INSERT INTO batches (product_id, quantity, expiry_date)
+                VALUES ($1, $2, $3)
+            `, [productId, quantity, expiry_date]);
+        }
+
+        // Limpeza inteligente: Se sobrou algum lote com quantidade 0 (como os lotes temporários
+        // gerados pela "Adição Rápida" na lista de compras), nós apagamos para não poluir a interface.
+        // Isso é seguro porque um lote de 0 não afeta o inventário.
+        await db.query('DELETE FROM batches WHERE product_id = $1 AND quantity <= 0', [productId]);
 
         return this._updateAggregates(productId);
     }
