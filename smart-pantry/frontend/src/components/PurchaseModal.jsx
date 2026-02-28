@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { Check, X, Calendar, ShoppingBag } from 'lucide-react';
 

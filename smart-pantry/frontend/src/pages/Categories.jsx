@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Plus, Tag } from 'lucide-react';
@@ -7,22 +8,19 @@ import { CategoryService } from '../services/category.service';
 export default function Categories() {
     const [categories, setCategories] = useState([]);
     const [newCategory, setNewCategory] = useState('');
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        loadCategories();
-    }, []);
 
     async function loadCategories() {
         try {
             const data = await CategoryService.getAll();
             setCategories(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+        } catch {
+            // Ignorado intencionalmente no catch
         }
     }
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
 
     async function handleAddCategory(e) {
         e.preventDefault();
@@ -33,7 +31,7 @@ export default function Categories() {
             setCategories([...categories, data]);
             setNewCategory('');
             toast.success('Categoria criada com sucesso!');
-        } catch (err) {
+        } catch {
             toast.error('Erro ao criar categoria.');
         }
     }

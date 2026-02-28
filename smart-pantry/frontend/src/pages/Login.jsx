@@ -17,7 +17,7 @@ export default function Login() {
       try {
         await AuthService.getVapidKey();
         setServerStatus('online');
-      } catch (error) {
+      } catch {
         setServerStatus('offline');
       }
     };

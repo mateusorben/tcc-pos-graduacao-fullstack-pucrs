@@ -11,7 +11,6 @@ import { APP_CONFIG, COLORS } from '../config/constants';
 export default function Pantry() {
   const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -78,8 +77,6 @@ export default function Pantry() {
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar produtos.');
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -162,7 +159,7 @@ export default function Pantry() {
       setNewBatchQty('');
       setNewBatchDate('');
       toast.success("Lote adicionado!");
-    } catch (e) {
+    } catch {
       toast.error("Erro ao adicionar lote");
     }
   }
@@ -179,7 +176,7 @@ export default function Pantry() {
 
 
       loadProducts();
-    } catch (e) {
+    } catch {
       toast.error("Erro ao atualizar lote");
     }
   }
@@ -191,7 +188,7 @@ export default function Pantry() {
       setBatches(updatedBatches);
       loadProducts();
       toast.success("Lote removido!");
-    } catch (e) {
+    } catch {
       toast.error("Erro ao remover lote");
     }
   }
@@ -208,7 +205,7 @@ export default function Pantry() {
       await ProductService.delete(productToDelete);
       setProducts(products.filter(p => p.id !== productToDelete));
       toast.success('Produto removido.');
-    } catch (err) {
+    } catch {
       toast.error("Erro ao excluir produto");
     } finally {
       setDeleteModalOpen(false);

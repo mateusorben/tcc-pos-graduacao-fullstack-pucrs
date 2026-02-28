@@ -13,46 +13,44 @@ export default function NotificationManager() {
     });
 
     useEffect(() => {
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        async function getPublicKey() {
+            const { data } = await api.get('/vapid-public-key');
+            return urlBase64ToUint8Array(data.publicKey);
+        }
+
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    const register = await navigator.serviceWorker.register('/sw.js');
+                    const subscription = await register.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: await getPublicKey()
+                    });
+                    await api.post('/subscribe', subscription);
+                    console.log('Push Registered!');
+                } catch (err) {
+                    console.error('Service Worker Error:', err);
+                }
+            }
+        }
+
         if (permission === 'granted') {
             registerServiceWorker();
         }
     }, [permission]);
-
-    async function registerServiceWorker() {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                const register = await navigator.serviceWorker.register('/sw.js');
-
-                const subscription = await register.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: await getPublicKey()
-                });
-
-                await api.post('/subscribe', subscription);
-                console.log('Push Registered!');
-            } catch (err) {
-                console.error('Service Worker Error:', err);
-            }
-        }
-    }
-
-    async function getPublicKey() {
-        const { data } = await api.get('/vapid-public-key');
-        return urlBase64ToUint8Array(data.publicKey);
-    }
-
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/\-/g, '+')
-            .replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
 
     async function requestPermission() {
         if (!('Notification' in window)) {

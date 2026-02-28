@@ -22,7 +22,7 @@ export default function StorageLocations() {
         try {
             const data = await StorageLocationService.getAll();
             setLocations(data);
-        } catch (error) {
+        } catch {
             toast.error("Erro ao carregar locais");
         } finally {
             setLoading(false);

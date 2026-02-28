@@ -1,21 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Package, LogOut, User, Settings, ShoppingCart, Sun, Moon, TrendingUp, Tag, LayoutGrid } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function Header() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const user = (() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    })();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const { theme, toggleTheme } = useTheme();
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
 
     function handleLogout() {
         localStorage.clear();
